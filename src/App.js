@@ -106,7 +106,8 @@ Ext.define('CustomApp', {
 
         chartConfig: {
           chart: {
-            type: 'column'
+            type: 'column',
+            zoomType: 'y'
           },
           plotOptions: {
             column: {

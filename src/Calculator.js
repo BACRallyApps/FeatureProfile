@@ -123,14 +123,17 @@ Ext.define('FeatureProfileCalculator', {
       var allStoryPoints = me._sumAllStories(storiesByFeature);
       var notStartedSeries = [];
       var inProgressSeries = [];
+      var featureSeries = [];
       var acceptedSeries = [];
       var allSeries = [];
+      var featureCostSeries = [];
       var series = [];
       var categories = [];
 
       Ext.Array.each(featureOrder, function (fid) {
         var where = allSeries.length - 1;
-        var current;
+        var storyCost, featureCost;
+        var featurePoints = (featureMap[fid].PreliminaryEstimate && featureMap[fid].PreliminaryEstimate.Value) || 0;
 
         categories.push(featureMap[fid].Name);
 
@@ -138,11 +141,15 @@ Ext.define('FeatureProfileCalculator', {
         inProgressSeries.push(inProgressStoryPointsByFeature[fid] || 0);
         acceptedSeries.push(acceptedStoryPointsByFeature[fid]|| 0);
         if (where >= 0 ) {
-          current = allSeries[where] + ((allStoryPoints[fid] || 0) * me.costPerPoint);
+          storyCost = allSeries[where] + ((allStoryPoints[fid] || 0) * me.costPerPoint);
+          featureCost = featureCostSeries[where] + (featurePoints * me.costPerPoint);
         } else {
-          current = (allStoryPoints[fid] || 0) * me.costPerPoint;
+          storyCost = (allStoryPoints[fid] || 0) * me.costPerPoint;
+          featureCost = featurePoints * me.costPerPoint;
         }
-        allSeries.push(current);
+        allSeries.push(storyCost);
+        featureSeries.push(featurePoints);
+        featureCostSeries.push(featureCost);
       });
 
 
@@ -150,6 +157,7 @@ Ext.define('FeatureProfileCalculator', {
         yAxis: 0,
         type: 'column',
         name: 'Accepted',
+        stack: 'story',
         data: acceptedSeries
       });
 
@@ -157,6 +165,7 @@ Ext.define('FeatureProfileCalculator', {
         yAxis: 0,
         type: 'column',
         name: 'InProgress',
+        stack: 'story',
         data: inProgressSeries
       });
 
@@ -164,7 +173,16 @@ Ext.define('FeatureProfileCalculator', {
         yAxis: 0,
         type: 'column',
         name: 'Not Started',
+        stack: 'story',
         data: notStartedSeries
+      });
+
+      series.push({
+        yAxis: 0,
+        type: 'column',
+        name: 'Feature Points',
+        stack: 'feature',
+        data: featureSeries
       });
 
       series.push({
@@ -172,6 +190,13 @@ Ext.define('FeatureProfileCalculator', {
         type: 'spline',
         name: 'Cost',
         data: allSeries
+      });
+
+      series.push({
+        yAxis: 1,
+        type: 'spline',
+        name: 'Feature Cost',
+        data: featureCostSeries
       });
 
       debugger;
