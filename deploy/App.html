@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FeatureProfile</title>
+
+    <script type="text/javascript" src="//rally1.rallydev.com/apps/2.0rc1/sdk.js?wsapiVersion=1.43"></script>
+
+
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+Ext.define('CustomApp', {
+    extend: 'Rally.app.TimeboxScopedApp',
+    componentCls: 'app',
+
+    scopeType: 'release',
+
+    settingsScope: 'project',
+    config: {
+      defaultSettings: {
+        costPerPoint: 200
+      }
+    },
+
+    getSettingsFields: function () {
+      return [{
+        name: 'costPerPoint',
+        label: 'Cost per Point',
+        xtype: 'rallynumberfield'
+      }];
+    },
+
+    addContent: function (scope) {
+      var me = this;
+
+      Ext.create('Rally.data.WsapiDataStore', {
+        autoLoad: true,
+        remoteFilter: false,
+        model: 'TypeDefinition',
+        sorters: [{
+          property: 'Ordinal',
+          direction: 'Desc'
+        }],
+        filters: [{
+          property: 'Parent.Name',
+          operator: '=',
+          value: 'Portfolio Item'
+        }, {
+          property: 'Creatable',
+          operator: '=',
+          value: 'true'
+        }],
+        listeners: {
+          load: function (store, recs) {
+            me.piTypes = {};
+
+            Ext.Array.each(recs, function (type) {
+              me.piTypes[type.get('Ordinal') + ''] = type.get('TypePath');
+            });
+
+            me.featureField = me.piTypes['0'].split('/')[1];
+
+            me.onScopeChange(scope);
+          },
+          scope: me
+        }
+      });
+    },
+
+    onScopeChange: function (scope) {
+      var me = this;
+      var query = scope.getQueryFilter();
+      var release = scope.getRecord().raw;
+
+      var featureConfig = {
+        autoLoad: true,
+        model: me.piTypes['0'],
+        fetch: ['Name', 'Release', 'ObjectID', 'PreliminaryEstimate', 'Value'],
+        filters: query
+      };
+
+      var storyConfig = {
+        autoLoad: true,
+        model: 'HierarchicalRequirement',
+        fetch: ['Name', 'Release', me.featureField, 'ObjectID', 'PlanEstimate', 'InProgressDate', 'AcceptedDate'],
+        filters: [{
+          property: me.featureField + '.Release.Name',
+          value: release.Name
+        }, {
+          property: me.featureField + '.Release.ReleaseStartDate',
+          value: release.ReleaseStartDate
+        }, {
+          property: me.featureField + '.Release.ReleaseDate',
+          value: release.ReleaseDate
+        }, {
+          property: 'DirectChildrenCount',
+          value: '0'
+        }]
+      };
+
+      me.createChart([featureConfig, storyConfig]);
+    },
+
+    createChart: function (storeConfig) {
+      var me = this;
+
+      me.removeAll(true);
+      chart = Ext.create('Rally.ui.chart.Chart', {
+        storeType: 'Rally.data.WsapiDataStore',
+        storeConfig: storeConfig,
+
+        calculatorType: 'FeatureProfileCalculator',
+        calculatorConfig: {
+          costPerPoint: me.getSetting('costPerPoint'),
+          featureField: me.featureField
+        },
+
+        chartConfig: {
+          chart: {
+            type: 'column'
+          },
+          plotOptions: {
+            column: {
+              stacking: 'normal'
+            }
+          },
+          title: {
+            text: 'Feature Profile'
+          },
+          subtitle: {
+            text: me.getContext().getTimeboxScope().getRecord().get('Name')
+          },
+          xAxis: {
+            title: {
+              text: 'Features'
+            },
+            //labels: {
+              //rotation: -45,
+              //align: 'right'
+            //}
+          },
+          yAxis: [{ // Primary Axis
+            min: 0,
+            title: {
+              text: 'Points'
+            }
+          }, { // Secondary Axis
+            title: {
+              text: 'Capital Cost'
+            },
+            min: 0,
+            opposite: true,
+            labels: {
+              formatter: function () {
+                return Ext.util.Format.currency(this.value);
+              }
+            }
+          }]
+        }
+      });
+
+      me.add(chart);
+    },
+});
+
+var __sumArray = function (arr, filterFn) {
+  var sum = 0;
+  var holder;
+
+  if (!filterFn) {
+    filterFn = function () { return true; };
+  }
+
+  Ext.Array.each(arr, function (itm) {
+    if (!filterFn(itm)) { return; }
+
+    holder = parseInt('' + itm.PlanEstimate, 10);
+
+    if (!isNaN(holder) && holder) {
+      sum = sum + holder;
+    }
+  });
+
+  return sum;
+};
+
+var __sumStories = function (storiesByFeature, filterFn) {
+  var map = {};
+
+  Ext.Object.each(storiesByFeature, function (fid, stories) {
+    map[fid] = __sumArray(stories, filterFn);
+  });
+
+  return map;
+};
+
+Ext.define('FeatureProfileCalculator', {
+    extend: 'Rally.data.lookback.calculator.BaseCalculator',
+
+    prepareChartData: function (stores) {
+      var snapshots = [];
+
+      Ext.Array.each(stores, function (store) {
+        store.each(function (record) {
+          snapshots.push(record.raw);
+        });
+      });
+
+      return this.runCalculation(snapshots);
+    },
+
+    _mapFeatures: function (records) {
+      var map = {};
+
+      Ext.Array.each(records, function (record) {
+        if (record._type.toLowerCase().indexOf('portfolioitem') === -1) { return; }
+
+        map[record.ObjectID] = record;
+      });
+
+      return map;
+    },
+
+    _sortFeaturesByRank: function (featureMap) {
+      var rank = Ext.Object.getKeys(featureMap);
+
+      rank.sort(function (a, b) {
+        return featureMap[a].Rank - featureMap[b].Rank;
+      });
+
+      return rank;
+    },
+
+    _hydrate: function (arr, map) {
+      var ret = [];
+
+      Ext.Array.each(arr, function (itm) {
+        ret.push(map[itm]);
+      });
+
+      return ret;
+    },
+
+    _groupStoriesByFeature: function (records) {
+      var map = {};
+      var featureField = this.featureField;
+
+      Ext.Array.each(records, function (record) {
+        if (record._type.toLowerCase() !== 'hierarchicalrequirement') { return; }
+        if (!record[featureField]) { return; }
+
+        console.log('Feature', featureField, record);
+        map[record[featureField].ObjectID] = map[record[featureField].ObjectID] || [];
+        map[record[featureField].ObjectID].push(record);
+      });
+
+      return map;
+    },
+
+    _sumPreIPStories: function (storiesByFeature) {
+      var filterFn = function (s) { return Ext.isEmpty(s.InProgressDate); };
+      return __sumStories(storiesByFeature, filterFn);
+    },
+
+    _sumIPStories: function (storiesByFeature) {
+      var filterFn = function (s) { return !Ext.isEmpty(s.InProgressDate) && Ext.isEmpty(s.AcceptedDate); };
+      return __sumStories(storiesByFeature, filterFn);
+    },
+
+    _sumAcceptedStories: function (storiesByFeature) {
+      var filterFn = function (s) { return !Ext.isEmpty(s.AcceptedDate); };
+      return __sumStories(storiesByFeature, filterFn);
+    },
+
+    _sumAllStories: function (storiesByFeature) {
+      var filterFn = function (s) { return true };
+      return __sumStories(storiesByFeature, filterFn);
+    },
+
+    runCalculation: function (records) {
+      var me = this;
+      var featureMap = me._mapFeatures(records);
+      var featureOrder = me._sortFeaturesByRank(featureMap);
+      var storiesByFeature = me._groupStoriesByFeature(records);
+      var notStartedStoryPointsByFeature = me._sumPreIPStories(storiesByFeature);
+      var inProgressStoryPointsByFeature = me._sumIPStories(storiesByFeature);
+      var acceptedStoryPointsByFeature = me._sumAcceptedStories(storiesByFeature);
+      var allStoryPoints = me._sumAllStories(storiesByFeature);
+      var notStartedSeries = [];
+      var inProgressSeries = [];
+      var acceptedSeries = [];
+      var allSeries = [];
+      var series = [];
+      var categories = [];
+
+      Ext.Array.each(featureOrder, function (fid) {
+        var where = allSeries.length - 1;
+        var current;
+
+        categories.push(featureMap[fid].Name);
+
+        notStartedSeries.push(notStartedStoryPointsByFeature[fid] || 0);
+        inProgressSeries.push(inProgressStoryPointsByFeature[fid] || 0);
+        acceptedSeries.push(acceptedStoryPointsByFeature[fid]|| 0);
+        if (where >= 0 ) {
+          current = allSeries[where] + ((allStoryPoints[fid] || 0) * me.costPerPoint);
+        } else {
+          current = (allStoryPoints[fid] || 0) * me.costPerPoint;
+        }
+        allSeries.push(current);
+      });
+
+
+      series.push({
+        yAxis: 0,
+        type: 'column',
+        name: 'Accepted',
+        data: acceptedSeries
+      });
+
+      series.push({
+        yAxis: 0,
+        type: 'column',
+        name: 'InProgress',
+        data: inProgressSeries
+      });
+
+      series.push({
+        yAxis: 0,
+        type: 'column',
+        name: 'Not Started',
+        data: notStartedSeries
+      });
+
+      series.push({
+        yAxis: 1,
+        type: 'spline',
+        name: 'Cost',
+        data: allSeries
+      });
+
+      debugger;
+
+      return {
+        categories: categories,
+        series: series
+      };
+    }
+});
+
+            
+            Rally.launchApp('CustomApp', {
+                name:"FeatureProfile",
+                parentRepos:""
+            });
+
+        });
+    </script>
+
+
+
+
+    <style type="text/css">
+.app {
+     /* Add app styles here */
+}
+
+    </style>
+
+</head>
+<body></body>
+</html>

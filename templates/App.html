@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{name}}</title>
+
+    <script type="text/javascript" src="//rally1.rallydev.com/apps/{{{sdk}}}/sdk.js?wsapiVersion=1.43"></script>
+
+{{#remote_javascript}}
+    <script type="text/javascript" src="{{{.}}}"></script>
+{{/remote_javascript}}
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+{{{javascript}}}
+            
+            Rally.launchApp('{{className}}', {
+                name:"{{name}}",
+                parentRepos:"{{{parents}}}"
+            });
+
+        });
+    </script>
+
+
+{{#remote_css}}
+    <link rel="stylesheet" type="text/css" href="{{{.}}}">
+{{/remote_css}}
+
+    <style type="text/css">
+{{{css}}}
+    </style>
+
+</head>
+<body></body>
+</html>
