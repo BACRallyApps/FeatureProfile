@@ -105,9 +105,11 @@ Ext.define('CustomApp', {
         },
 
         chartConfig: {
+          layout: 'fit',
           chart: {
             type: 'column',
-            zoomType: 'y'
+            zoomType: 'y',
+            height: me.getHeight()
           },
           plotOptions: {
             column: {
@@ -124,10 +126,10 @@ Ext.define('CustomApp', {
             title: {
               text: 'Features'
             },
-            //labels: {
-              //rotation: -45,
-              //align: 'right'
-            //}
+            labels: {
+              rotation: -45,
+              align: 'right'
+            }
           },
           yAxis: [{ // Primary Axis
             min: 0,
@@ -149,6 +151,16 @@ Ext.define('CustomApp', {
         }
       });
 
-      me.add(chart);
+      var container = {
+        xtype: 'container',
+        itemId: 'container',
+      };
+
+      me.add(container);
+      me.down('#container').add(chart);
+
+      //chart.on('chartRendered', function (chart) {
+        //chart.down('#chart').setHeight(me.getHeight() - 32);
+      //});
     },
 });
