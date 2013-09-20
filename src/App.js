@@ -131,8 +131,8 @@ Ext.define('CustomApp', {
               text: 'Features'
             },
             labels: {
-              rotation: -45,
-              align: 'right'
+              //rotation: -45,
+              //align: 'right'
             }
           },
           yAxis: [{ // Primary Axis
