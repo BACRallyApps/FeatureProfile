@@ -64,7 +64,7 @@ Ext.define('CustomApp', {
       var featureConfig = {
         autoLoad: true,
         model: me.piTypes['0'],
-        fetch: ['Name', 'Release', 'ObjectID', 'PreliminaryEstimate', 'Value'],
+        fetch: ['Name', 'Release', 'ObjectID', 'PreliminaryEstimate', 'Value', 'Ranl'],
         filters: query
       };
 
