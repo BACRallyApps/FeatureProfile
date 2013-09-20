@@ -7,7 +7,9 @@ Ext.define('CustomApp', {
     settingsScope: 'project',
     config: {
       defaultSettings: {
-        costPerPoint: 200
+        costPerPoint: 200,
+        truncateStringLength: 20,
+        rotateLabels: false
       }
     },
 
@@ -18,6 +20,14 @@ Ext.define('CustomApp', {
         name: 'costPerPoint',
         label: 'Cost per Point',
         xtype: 'rallynumberfield'
+      }, {
+        name: 'truncateStringLength',
+        label: 'Truncate Feature Names Length',
+        xtype: 'rallynumberfield'
+      }, {
+        name: 'rotateLabels',
+        label: 'Rotate Labels',
+        xtype: 'rallycheckboxfield'
       }];
     },
 
@@ -66,7 +76,7 @@ Ext.define('CustomApp', {
       var featureConfig = {
         autoLoad: true,
         model: me.piTypes['0'],
-        fetch: ['Name', 'Release', 'ObjectID', 'PreliminaryEstimate', 'Value', 'Rank'],
+        fetch: ['Name', 'Release', 'ObjectID', 'FormattedID', 'PreliminaryEstimate', 'Value', 'Rank'],
         filters: query
       };
 
@@ -94,6 +104,27 @@ Ext.define('CustomApp', {
 
     createChart: function (storeConfig) {
       var me = this;
+
+      var labelConfig = {
+        formatter: function () {
+          var parts = this.value.split('::');
+          var oid = parts[0];
+          var fid = parts[1];
+          var name = parts[2];
+          var len = parseInt('' + me.getSetting('truncateStringLength'), 10);
+
+          if (!isNaN(len) && len > 0) {
+            name = Ext.util.Format.ellipsis(name, len, true);
+          }
+
+          return fid + ': ' + name;
+        }
+      };
+
+      if (!!me.getSetting('rotateLabels')) {
+        labelConfig.rotation = -45;
+        labelConfig.align = 'right';
+      }
 
       me.removeAll(true);
       chart = Ext.create('Rally.ui.chart.Chart', {
@@ -130,10 +161,7 @@ Ext.define('CustomApp', {
             title: {
               text: 'Features'
             },
-            labels: {
-              //rotation: -45,
-              //align: 'right'
-            }
+            labels: labelConfig
           },
           yAxis: [{ // Primary Axis
             min: 0,

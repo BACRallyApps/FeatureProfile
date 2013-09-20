@@ -63,8 +63,6 @@ Ext.define('FeatureProfileCalculator', {
         return featureMap[a].Rank - featureMap[b].Rank;
       });
 
-      debugger;
-
       return rank;
     },
 
@@ -137,7 +135,7 @@ Ext.define('FeatureProfileCalculator', {
         var storyCost, featureCost;
         var featurePoints = (featureMap[fid].PreliminaryEstimate && featureMap[fid].PreliminaryEstimate.Value) || 0;
 
-        categories.push(featureMap[fid].Name);
+        categories.push('' + featureMap[fid].ObjectID + '::' + featureMap[fid].FormattedID + '::' + featureMap[fid].Name);
 
         notStartedSeries.push(notStartedStoryPointsByFeature[fid] || 0);
         inProgressSeries.push(inProgressStoryPointsByFeature[fid] || 0);
