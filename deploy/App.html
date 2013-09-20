@@ -22,6 +22,8 @@ Ext.define('CustomApp', {
       }
     },
 
+    layout: 'fit',
+
     getSettingsFields: function () {
       return [{
         name: 'costPerPoint',
@@ -75,7 +77,7 @@ Ext.define('CustomApp', {
       var featureConfig = {
         autoLoad: true,
         model: me.piTypes['0'],
-        fetch: ['Name', 'Release', 'ObjectID', 'PreliminaryEstimate', 'Value'],
+        fetch: ['Name', 'Release', 'ObjectID', 'PreliminaryEstimate', 'Value', 'Rank'],
         filters: query
       };
 
@@ -243,6 +245,8 @@ Ext.define('FeatureProfileCalculator', {
         return featureMap[a].Rank - featureMap[b].Rank;
       });
 
+      debugger;
+
       return rank;
     },
 
@@ -403,7 +407,6 @@ Ext.define('FeatureProfileCalculator', {
     <style type="text/css">
 .app {
      /* Add app styles here */
-  min-height: 600px;
 }
 
     </style>

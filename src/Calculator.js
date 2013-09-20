@@ -63,6 +63,8 @@ Ext.define('FeatureProfileCalculator', {
         return featureMap[a].Rank - featureMap[b].Rank;
       });
 
+      debugger;
+
       return rank;
     },
 

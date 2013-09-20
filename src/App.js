@@ -11,6 +11,8 @@ Ext.define('CustomApp', {
       }
     },
 
+    layout: 'fit',
+
     getSettingsFields: function () {
       return [{
         name: 'costPerPoint',
@@ -64,7 +66,7 @@ Ext.define('CustomApp', {
       var featureConfig = {
         autoLoad: true,
         model: me.piTypes['0'],
-        fetch: ['Name', 'Release', 'ObjectID', 'PreliminaryEstimate', 'Value', 'Ranl'],
+        fetch: ['Name', 'Release', 'ObjectID', 'PreliminaryEstimate', 'Value', 'Rank'],
         filters: query
       };
 
