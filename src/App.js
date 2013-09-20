@@ -104,6 +104,8 @@ Ext.define('CustomApp', {
           featureField: me.featureField
         },
 
+        chartColors: ['green', 'yellow', 'grey', 'blue', 'red', 'orange'],
+
         chartConfig: {
           layout: 'fit',
           chart: {
