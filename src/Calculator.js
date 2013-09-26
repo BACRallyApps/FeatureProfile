@@ -188,14 +188,14 @@ Ext.define('FeatureProfileCalculator', {
       series.push({
         yAxis: 1,
         type: 'spline',
-        name: 'Cost',
+        name: 'Cumulative Cost',
         data: allSeries
       });
 
       series.push({
         yAxis: 1,
         type: 'spline',
-        name: 'Feature Cost',
+        name: 'Cumulative Feature Cost',
         data: featureCostSeries
       });
 
