@@ -143,7 +143,7 @@ Ext.define('CustomApp', {
           layout: 'fit',
           chart: {
             type: 'column',
-            zoomType: 'y',
+            zoomType: 'x',
             height: me.getHeight()
           },
           plotOptions: {
