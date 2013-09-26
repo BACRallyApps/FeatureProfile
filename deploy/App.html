@@ -168,6 +168,19 @@ Ext.define('CustomApp', {
           subtitle: {
             text: me.getContext().getTimeboxScope().getRecord().get('Name')
           },
+          tooltip: {
+            formatter: function () {
+              var parts = this.key.split("::");
+              var value = this.y;
+
+              if (this.series.name.indexOf('Cost') !== -1) {
+                value =  Ext.util.Format.currency(value) + ' (' + (parseInt('' +  value, 10) / parseInt(me.getSetting('costPerPoint'), 10)) + ' SP)';
+              }
+
+              return '<span style="font-size: 10px">' + parts[1] + ': ' + parts[2] + '</span><br/>' +
+                     '<span style="color:' + this.series.color + '">' + this.series.name + '</span>: <b>' + value + '</b><br/>';
+            }
+          },
           xAxis: {
             title: {
               text: 'Features'
