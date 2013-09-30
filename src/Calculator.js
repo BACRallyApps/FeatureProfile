@@ -199,8 +199,6 @@ Ext.define('FeatureProfileCalculator', {
         data: featureCostSeries
       });
 
-      debugger;
-
       return {
         categories: categories,
         series: series

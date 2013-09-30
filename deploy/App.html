@@ -18,6 +18,8 @@ Ext.define('CustomApp', {
     settingsScope: 'project',
     config: {
       defaultSettings: {
+        includeBefore: 0,
+        includeAfter: 0,
         costPerPoint: 200,
         truncateStringLength: 20,
         rotateLabels: false
@@ -32,6 +34,14 @@ Ext.define('CustomApp', {
         label: 'Cost per Point',
         xtype: 'rallynumberfield'
       }, {
+        name: 'includeBefore',
+        label: 'Include Previous Releases',
+        xtype: 'rallynumberfield'
+      }, {
+        name: 'includeAfter',
+        label: 'Include Subsequent Releases',
+        xtype: 'rallynumberfield'
+      },{
         name: 'truncateStringLength',
         label: 'Truncate Feature Names Length',
         xtype: 'rallynumberfield'
@@ -81,40 +91,142 @@ Ext.define('CustomApp', {
 
     onScopeChange: function (scope) {
       var me = this;
-      var query = scope.getQueryFilter();
-      var release = scope.getRecord().raw;
 
-      var featureConfig = {
-        autoLoad: true,
-        model: me.piTypes['0'],
-        fetch: ['Name', 'Release', 'ObjectID', 'FormattedID', 'PreliminaryEstimate', 'Value', 'Rank'],
-        filters: query
+      me._queryForReleases(scope, function (releases) {
+        var startDate = releases[0].raw.ReleaseStartDate;
+        var endDate = releases[releases.length - 1].raw.ReleaseDate;
+        me.releaseList = releases;
+
+        var featureConfig = {
+          autoLoad: true,
+          model: me.piTypes['0'],
+          fetch: ['Name', 'Release', 'ObjectID', 'FormattedID', 'PreliminaryEstimate', 'Value', 'Rank'],
+          filters: [{
+            property: 'Release.ReleaseStartDate',
+            operator: '>=',
+            value: startDate
+          }, {
+            property: 'Release.ReleaseDate',
+            operator: '<=',
+            value: endDate
+          }]
+        };
+
+        var storyConfig = {
+          autoLoad: true,
+          model: 'HierarchicalRequirement',
+          fetch: ['Name', 'Release', me.featureField, 'ObjectID', 'PlanEstimate', 'InProgressDate', 'AcceptedDate'],
+          filters: [{
+            property: me.featureField + '.Release.ReleaseStartDate',
+            operator: '>=',
+            value: startDate
+          }, {
+            property: me.featureField + '.Release.ReleaseDate',
+            operator: '<=',
+            value: endDate
+          }, {
+            property: 'DirectChildrenCount',
+            value: '0'
+          }]
+        };
+
+        me.createChart([featureConfig, storyConfig]);
+      });
+    },
+
+    _queryForReleases: function (scope, callback) {
+      var me = this;
+      var query;
+      var requestedReleases = [];
+      var processedReleases = [];
+      var numReleaseReqs = 0;
+      var preRels = parseInt('' + me.getSetting('includeBefore'), 10) || 0;
+      var supRels = parseInt('' + me.getSetting('includeAfter'), 10) || 0;
+
+      var doProcess = function (records, operator, success) {
+        //console.log('doProcess:arguments', arguments);
+        var rels = [];
+
+        if (records) {
+          processedReleases.push(records);
+        }
+
+        if (processedReleases.length === numReleaseReqs) {
+          rels = rels.concat.apply(rels, processedReleases);
+          rels.push(scope.getRecord());
+
+          rels.sort(function (a, b) {
+            var da = Rally.util.DateTime.fromIsoString(a.raw.ReleaseStartDate);
+            var db = Rally.util.DateTime.fromIsoString(b.raw.ReleaseStartDate);
+            return Rally.util.DateTime.getDifference(da, db, 'day');
+          });
+
+          callback(rels);
+        }
       };
 
-      var storyConfig = {
-        autoLoad: true,
-        model: 'HierarchicalRequirement',
-        fetch: ['Name', 'Release', me.featureField, 'ObjectID', 'PlanEstimate', 'InProgressDate', 'AcceptedDate'],
-        filters: [{
-          property: me.featureField + '.Release.Name',
-          value: release.Name
-        }, {
-          property: me.featureField + '.Release.ReleaseStartDate',
-          value: release.ReleaseStartDate
-        }, {
-          property: me.featureField + '.Release.ReleaseDate',
-          value: release.ReleaseDate
-        }, {
-          property: 'DirectChildrenCount',
-          value: '0'
-        }]
-      };
+      if (preRels) {
+        numReleaseReqs++;
+        requestedReleases.push(Ext.create('Rally.data.WsapiDataStore', {
+          model: 'Release',
+          //autoLoad: true,
+          pageSize: preRels,
+          remoteFilter: true,
+          remoteSort: true,
+          context: {
+            projectScopeUp: false,
+            projectScopeDown: false
+          },
+          sorters: [{ 
+            property: 'ReleaseStartDate',
+            direction: 'DESC'
+          }],
+          filters: [{
+            property: 'ReleaseStartDate',
+            operator: '<',
+            value: me._getStartDate(scope.getRecord())
+          }]
+        }));
+      }
 
-      me.createChart([featureConfig, storyConfig]);
+      if (supRels) {
+        numReleaseReqs++;
+        requestedReleases.push(Ext.create('Rally.data.WsapiDataStore', {
+          model: 'Release',
+          //autoLoad: true,
+          pageSize: supRels,
+          remoteFilter: true,
+          remoteSort: true,
+          context: {
+            projectScopeUp: false,
+            projectScopeDown: false
+          },
+          sorters: [{ 
+            property: 'ReleaseStartDate',
+            direction: 'ASC'
+          }],
+          filters: [{
+            property: 'ReleaseDate',
+            operator: '>',
+            value: me._getEndDate(scope.getRecord())
+          }]
+        }));
+      }
+
+      Ext.Array.each(requestedReleases, function (rr) {
+        rr.loadPage(1, { scope: me, callback: doProcess });
+      });
+
+      if (!(preRels || supRels)) {
+        doProcess();
+      }
     },
 
     createChart: function (storeConfig) {
       var me = this;
+      var subtitle = Ext.Array.map(me.releaseList, function (release) {
+        return release.raw.Name;
+      }).join(', ');
 
       var labelConfig = {
         formatter: function () {
@@ -166,7 +278,7 @@ Ext.define('CustomApp', {
             text: 'Feature Profile'
           },
           subtitle: {
-            text: me.getContext().getTimeboxScope().getRecord().get('Name')
+            text: subtitle
           },
           tooltip: {
             formatter: function () {
@@ -214,11 +326,15 @@ Ext.define('CustomApp', {
 
       me.add(container);
       me.down('#container').add(chart);
-
-      //chart.on('chartRendered', function (chart) {
-        //chart.down('#chart').setHeight(me.getHeight() - 32);
-      //});
     },
+
+    _getStartDate: function (release) {
+      return release.raw.ReleaseStartDate;
+    },
+
+    _getEndDate: function (release) {
+      return release.raw.ReleaseDate;
+    }
 });
 
 var __sumArray = function (arr, filterFn) {
@@ -421,8 +537,6 @@ Ext.define('FeatureProfileCalculator', {
         name: 'Cumulative Feature Cost',
         data: featureCostSeries
       });
-
-      debugger;
 
       return {
         categories: categories,
