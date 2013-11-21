@@ -4,6 +4,8 @@
     <title>FeatureProfile</title>
 
     <script type="text/javascript" src="//rally1.rallydev.com/apps/2.0rc1/sdk.js?wsapiVersion=1.43"></script>
+    <script type="text/javascript" src="//rally1.rallydev.com/apps/2.0rc1/lib/analytics/analytics-all.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/highcharts/2.3.5/modules/exporting.js"></script>
 
 
 
@@ -267,7 +269,8 @@ Ext.define('CustomApp', {
           chart: {
             type: 'column',
             zoomType: 'x',
-            height: me.getHeight()
+            height: me.getHeight(),
+            width: me.getWidth()
           },
           plotOptions: {
             column: {
@@ -306,7 +309,7 @@ Ext.define('CustomApp', {
             }
           }, { // Secondary Axis
             title: {
-              text: 'Capital Cost'
+              text: 'Estimated Cost'
             },
             min: 0,
             opposite: true,

@@ -256,7 +256,8 @@ Ext.define('CustomApp', {
           chart: {
             type: 'column',
             zoomType: 'x',
-            height: me.getHeight()
+            height: me.getHeight(),
+            width: me.getWidth()
           },
           plotOptions: {
             column: {
@@ -295,7 +296,7 @@ Ext.define('CustomApp', {
             }
           }, { // Secondary Axis
             title: {
-              text: 'Capital Cost'
+              text: 'Estimated Cost'
             },
             min: 0,
             opposite: true,
