@@ -450,7 +450,7 @@ Ext.define('FeatureProfileCalculator', {
     },
 
     _sumAllStories: function (storiesByFeature) {
-      var filterFn = function (s) { return true };
+      var filterFn = function (s) { return true; };
       return __sumStories(storiesByFeature, filterFn);
     },
 
