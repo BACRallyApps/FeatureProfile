@@ -42,6 +42,8 @@ Ext.define('CustomApp', {
     },
 
     addContent: function (scope) {
+      console.log("addContent");
+
       var me = this;
 
       Ext.create('Rally.data.WsapiDataStore', {
@@ -63,6 +65,7 @@ Ext.define('CustomApp', {
         }],
         listeners: {
           load: function (store, recs) {
+            console.log('load:arguments', arguments);
             me.piTypes = {};
 
             Ext.Array.each(recs, function (type) {
@@ -71,15 +74,35 @@ Ext.define('CustomApp', {
 
             me.featureField = me.piTypes['0'].split('/')[1];
 
-            me.onScopeChange(scope);
+            // me.onScopeChange(scope);
+            me.doit(scope);
           },
           scope: me
         }
       });
     },
 
+    // launch: function() {
+    //   console.log("launch");
+    //   this.addContent();
+    // },
+
     onScopeChange: function (scope) {
+
       var me = this;
+
+      if (_.isUndefined(me.piTypes))
+        me.addContent(scope);
+      else
+        me.doit(scope);
+
+    },
+
+    doit: function (scope) {
+      console.log("onScopeChange",scope);
+      var me = this;
+
+      // me.addContent(scope);
 
       me._queryForReleases(scope, function (releases) {
         var startDate = releases[0].raw.ReleaseStartDate;
@@ -133,7 +156,7 @@ Ext.define('CustomApp', {
       var supRels = parseInt('' + me.getSetting('includeAfter'), 10) || 0;
 
       var doProcess = function (records, operator, success) {
-        //console.log('doProcess:arguments', arguments);
+        console.log('doProcess:arguments', arguments);
         var rels = [];
 
         if (records) {

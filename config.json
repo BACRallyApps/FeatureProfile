@@ -1,16 +1,15 @@
 {
-    "name": "FeatureProfile",
-    "className": "CustomApp",
-    "server": "demo02.rallydev.com",
-    "sdk": "2.0rc1",
-    "remote_javascript": [
-    ],
-    "javascript": [
-        "src/App.js"
-    ],
-    "remote_css": [
-    ],
-    "css": [
-        "styles/app.css"
-    ]
+   "name": "FeatureProfile",
+   "className": "CustomApp",
+   "server": "rally1.rallydev.com",
+   "sdk": "2.0rc3",
+   "remote_javascript": [],
+   "javascript": [
+      "src/App.js",
+      "src/Calculator.js"
+   ],
+   "remote_css": [],
+   "css": [
+      "styles/app.css"
+   ]
 }
