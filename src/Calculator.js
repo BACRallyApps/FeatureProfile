@@ -40,7 +40,6 @@ Ext.define('FeatureProfileCalculator', {
           snapshots.push(record.raw);
         });
       });
-
       return this.runCalculation(snapshots);
     },
 
@@ -84,7 +83,6 @@ Ext.define('FeatureProfileCalculator', {
         if (record._type.toLowerCase() !== 'hierarchicalrequirement') { return; }
         if (!record[featureField]) { return; }
 
-        console.log('Feature', featureField, record);
         map[record[featureField].ObjectID] = map[record[featureField].ObjectID] || [];
         map[record[featureField].ObjectID].push(record);
       });

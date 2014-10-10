@@ -7,7 +7,16 @@
 
     <script type="text/javascript">
         Rally.onReady(function () {
-                Ext.define('CustomApp', {
+                Ext.define('Rally.ui.chart.ChartStoreLoadFix', {
+     override: 'Rally.ui.chart.Chart',
+
+     _storeLoadHandler: function (store) {
+            store.un('load', this._storeLoadHandler, this);
+            this.callParent(arguments);
+        }
+ });
+
+Ext.define('CustomApp', {
     extend: 'Rally.app.TimeboxScopedApp',
     componentCls: 'app',
 
@@ -51,7 +60,7 @@
     },
 
     addContent: function (scope) {
-      console.log("addContent");
+      // console.log("addContent");
 
       var me = this;
 
@@ -74,7 +83,7 @@
         }],
         listeners: {
           load: function (store, recs) {
-            console.log('load:arguments', arguments);
+            // console.log('load:arguments', arguments);
             me.piTypes = {};
 
             Ext.Array.each(recs, function (type) {
@@ -151,7 +160,7 @@
           }]
         };
 
-        me.createChart([featureConfig, storyConfig]);
+        me.createChart([storyConfig,featureConfig]);
       });
     },
 
@@ -165,7 +174,7 @@
       var supRels = parseInt('' + me.getSetting('includeAfter'), 10) || 0;
 
       var doProcess = function (records, operator, success) {
-        console.log('doProcess:arguments', arguments);
+        // console.log('doProcess:arguments', arguments);
         var rels = [];
 
         if (records) {
@@ -401,7 +410,6 @@ Ext.define('FeatureProfileCalculator', {
           snapshots.push(record.raw);
         });
       });
-
       return this.runCalculation(snapshots);
     },
 
@@ -445,7 +453,6 @@ Ext.define('FeatureProfileCalculator', {
         if (record._type.toLowerCase() !== 'hierarchicalrequirement') { return; }
         if (!record[featureField]) { return; }
 
-        console.log('Feature', featureField, record);
         map[record[featureField].ObjectID] = map[record[featureField].ObjectID] || [];
         map[record[featureField].ObjectID].push(record);
       });

@@ -1,3 +1,12 @@
+Ext.define('Rally.ui.chart.ChartStoreLoadFix', {
+     override: 'Rally.ui.chart.Chart',
+
+     _storeLoadHandler: function (store) {
+            store.un('load', this._storeLoadHandler, this);
+            this.callParent(arguments);
+        }
+ });
+
 Ext.define('CustomApp', {
     extend: 'Rally.app.TimeboxScopedApp',
     componentCls: 'app',
@@ -42,7 +51,7 @@ Ext.define('CustomApp', {
     },
 
     addContent: function (scope) {
-      console.log("addContent");
+      // console.log("addContent");
 
       var me = this;
 
@@ -65,7 +74,7 @@ Ext.define('CustomApp', {
         }],
         listeners: {
           load: function (store, recs) {
-            console.log('load:arguments', arguments);
+            // console.log('load:arguments', arguments);
             me.piTypes = {};
 
             Ext.Array.each(recs, function (type) {
@@ -142,7 +151,7 @@ Ext.define('CustomApp', {
           }]
         };
 
-        me.createChart([featureConfig, storyConfig]);
+        me.createChart([storyConfig,featureConfig]);
       });
     },
 
@@ -156,7 +165,7 @@ Ext.define('CustomApp', {
       var supRels = parseInt('' + me.getSetting('includeAfter'), 10) || 0;
 
       var doProcess = function (records, operator, success) {
-        console.log('doProcess:arguments', arguments);
+        // console.log('doProcess:arguments', arguments);
         var rels = [];
 
         if (records) {
