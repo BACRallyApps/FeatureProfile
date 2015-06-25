@@ -24,7 +24,7 @@ Ext.define('CustomApp', {
       }
     },
 
-    layout: 'fit',
+    // layout: 'fit',
 
     getSettingsFields: function () {
       return [{
@@ -270,7 +270,7 @@ Ext.define('CustomApp', {
         labelConfig.align = 'right';
       }
 
-      me.removeAll(true);
+      // me.removeAll(true);
       chart = Ext.create('Rally.ui.chart.Chart', {
         storeType: 'Rally.data.WsapiDataStore',
         storeConfig: storeConfig,
@@ -341,6 +341,8 @@ Ext.define('CustomApp', {
         }
       });
 
+      if (!_.isNull(me.down('#container')))
+        me.down('#container').removeAll();
       var container = {
         xtype: 'container',
         itemId: 'container',

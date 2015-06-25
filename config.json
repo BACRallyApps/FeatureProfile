@@ -1,7 +1,7 @@
 {
    "name": "FeatureProfile",
    "className": "CustomApp",
-   "server": "rally1.rallydev.com",
+   "server": "https://rally1.rallydev.com",
    "sdk": "2.0rc3",
    "remote_javascript": [],
    "javascript": [
